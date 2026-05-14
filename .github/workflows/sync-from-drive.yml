@@ -16,14 +16,7 @@ jobs:
           curl -L "https://drive.google.com/uc?export=download&id=1g8mD6E6IDR-tME_PmT8_UNtGi8TMAiC0" -o DataTest.csv
 
       - name: Convert CSV to JSON
-        run: |
-          python3 - <<'EOF'
-import csv, json
-with open('DataTest.csv', encoding='utf-8-sig') as f:
-  rows = list(csv.DictReader(f))
-with open('DataTest.json', 'w') as f:
-  json.dump(rows, f, indent=2)
-EOF
+        run: python3 scripts/csv_to_json.py
 
       - name: Commit and Push
         run: |
