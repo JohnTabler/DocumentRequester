@@ -30,6 +30,6 @@ jobs:
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add DataTest.csv
-          git add DataTest.json
+          git add data/DataTest.json
           git commit -m "Auto-sync from Google Drive" || echo "No changes to commit"
           git push
