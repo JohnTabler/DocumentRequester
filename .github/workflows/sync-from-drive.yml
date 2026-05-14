@@ -16,6 +16,10 @@ jobs:
       - name: Download CSV from Google Drive
         run: |
           curl -L "https://drive.google.com/uc?export=download&id=1g8mD6E6IDR-tME_PmT8_UNtGi8TMAiC0" -o DataTest.csv
+          echo "--- File size ---"
+          wc -l DataTest.csv
+          echo "--- First 3 lines ---"
+          head -3 DataTest.csv
 
       - name: Convert CSV to JSON
         run: python3 scripts/csv_to_json.py
