@@ -1,0 +1,35 @@
+name: Sync CSV from Google Drive and Convert to JSON
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'  # Every Monday 9am UTC — adjust to match your PA recurrence
+  workflow_dispatch:       # Allows manual trigger from GitHub UI
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download CSV from Google Drive
+        run: |
+          curl -L "https://drive.google.com/uc?export=download&id=1g8mD6E6IDR-tME_PmT8_UNtGi8TMAiC0" -o DataTest.csv
+
+      - name: Convert CSV to JSON
+        run: |
+          python3 - <<'EOF'
+          import csv, json
+          with open('DataTest.csv') as f:
+            rows = list(csv.DictReader(f))
+          with open('DataTest.json', 'w') as f:
+            json.dump(rows, f, indent=2)
+          EOF
+
+      - name: Commit and Push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add DataTest.csv
+          git add DataTest.json
+          git commit -m "Auto-sync from Google Drive" || echo "No changes to commit"
+          git push
