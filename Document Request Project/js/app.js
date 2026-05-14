@@ -67,7 +67,9 @@
   // ── Init ───────────────────────────────────────────────────
   footerYear.textContent = new Date().getFullYear();
 
-  fetch("data/documents.json")
+  const DATA_URL = "https://raw.githubusercontent.com/JohnTabler/DocumentRequester/main/data/DataTest.json";
+
+fetch(DATA_URL)
     .then((res) => {
       if (!res.ok) throw new Error("Failed to load documents.json");
       return res.json();
