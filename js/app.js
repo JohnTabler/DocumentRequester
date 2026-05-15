@@ -6,6 +6,15 @@
 (function () {
   "use strict";
 
+// ── EmailJS Config ─────────────────────────────────────────
+  const EMAILJS_PUBLIC_KEY      = "MZ9UQ4CwdKnUxbBmB";
+  const EMAILJS_SERVICE_ID      = "service_neenpj9";
+  const EMAILJS_APPROVER_TMPL   = "template_s9epbca";
+  const EMAILJS_CONFIRM_TMPL    = "template_pmo4jg8";
+  const APPROVER_EMAIL          = "johntabler@gmail.com";
+
+emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+
     // ── Campus Display Names ───────────────────────────────────
   const CAMPUS_NAMES = {
     "01-City":          "City College",
@@ -329,17 +338,54 @@ fetch(DATA_URL)
       return;
     }
 
-    // ── Stub: Replace this block with your email/form submission logic ──
-    console.log("Request submitted:", {
-      name,
-      email,
-      organization: reqOrg.value.trim(),
-      message: reqMessage.value.trim(),
-      documents: Array.from(selectedDocuments),
-    });
-    // ── End stub ──
+    // ── Build document list for email ──────────────────────────
+    const docDetails = Array.from(selectedDocuments).map((docName) => {
+      const doc = allDocuments.find((d) => d.name === docName);
+      const meta = doc
+        ? [
+            doc.campus   ? `Campus: ${CAMPUS_NAMES[doc.campus] || doc.campus}` : null,
+            doc.building ? `Building: ${doc.building}` : null,
+            doc.project  ? `Project: ${doc.project}`  : null,
+          ].filter(Boolean).join(" · ")
+        : null;
+      return meta ? `• ${docName}\n  ${meta}` : `• ${docName}`;
+    }).join("\n");
 
-    showConfirmation();
+    const templateParams = {
+      requester_name:    name,
+      requester_email:   email,
+      requester_org:     reqOrg.value.trim() || "Not provided",
+      requester_message: reqMessage.value.trim() || "None",
+      document_list:     docDetails,
+    };
+
+    // ── Loading state ──────────────────────────────────────────
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = "Sending…";
+
+    // ── Send both emails ───────────────────────────────────────
+    Promise.all([
+      emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_APPROVER_TMPL, {
+        ...templateParams,
+        to_email: APPROVER_EMAIL,
+      }),
+      emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_CONFIRM_TMPL, {
+        ...templateParams,
+        to_email: email,
+      }),
+    ])
+      .then(() => {
+        showConfirmation();
+      })
+      .catch((err) => {
+        console.error("EmailJS error:", err);
+        validationMsg.innerHTML = "<div>There was a problem sending your request. Please try again or contact us directly.</div>";
+        validationMsg.classList.remove("hidden");
+      })
+      .finally(() => {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = "Submit Request";
+      });
   }
 
   function showConfirmation() {
