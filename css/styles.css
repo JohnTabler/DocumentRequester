@@ -18,8 +18,8 @@
   --color-success:      #2E7D32;
   --color-error:        #C62828;
 
-  --font-display: 'Cinzel', 'Optima', 'Palatino Linotype', serif;
-  --font-body:    'Source Sans 3', 'Optima', Arial, sans-serif;
+  --font-display: 'Montserrat', Arial, sans-serif;
+  --font-body:    'Inter', 'Segoe UI', Arial, sans-serif;
 
   --radius:    6px;
   --shadow:    0 2px 8px rgba(0, 0, 0, 0.08);
