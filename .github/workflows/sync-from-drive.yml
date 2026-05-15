@@ -2,7 +2,7 @@ name: Sync CSV from Google Drive and Convert to JSON
 
 on:
   schedule:
-    - cron: '0 9 * * 1'  # Every Monday 9am UTC — adjust to match your PA recurrence
+    - cron: '30 20 * * 5'  # Every Monday 9am UTC — adjust to match your PA recurrence
   workflow_dispatch:       # Allows manual trigger from GitHub UI
 
 jobs:
