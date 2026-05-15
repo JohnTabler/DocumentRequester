@@ -65,6 +65,10 @@ ul { list-style: none; }
   align-items: center;
   gap: 16px;
 }
+.logo-img {
+  height: 60px;
+  width: auto;
+}
 .logo-placeholder {
   width: 56px;
   height: 56px;
