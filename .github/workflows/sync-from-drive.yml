@@ -16,17 +16,6 @@ jobs:
       - name: Download CSVs from Google Drive and Convert to JSON
         run: python3 scripts/csv_to_json.py
 
-      - name: Debug JSON size
-        run: |
-          echo "--- Row count ---"
-          python3 -c "import json; data=json.load(open('data/DataTest.json')); print(len(data), 'rows')"
-          echo "--- File size ---"
-          ls -lh data/DataTest.json
-          echo "--- First row ---"
-          python3 -c "import json; data=json.load(open('data/DataTest.json')); print(json.dumps(data[0], indent=2))"
-          echo "--- Row sizes ---"
-          python3 scripts/debug_json.py
-
       - name: Commit and Push
         run: |
           git config user.name "github-actions"
