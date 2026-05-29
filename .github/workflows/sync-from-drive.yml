@@ -23,3 +23,11 @@ jobs:
           git add data/DataTest.json
           git commit -m "Auto-sync from Google Drive" || echo "No changes to commit"
           git push
+- name: Debug JSON size
+  run: |
+    echo "--- Row count ---"
+    python3 -c "import json; data=json.load(open('data/DataTest.json')); print(len(data), 'rows')"
+    echo "--- File size ---"
+    ls -lh data/DataTest.json
+    echo "--- First row ---"
+    python3 -c "import json; data=json.load(open('data/DataTest.json')); print(json.dumps(data[0], indent=2))"
