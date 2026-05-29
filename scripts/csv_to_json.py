@@ -45,6 +45,6 @@ for source in SOURCES:
     print(f"  -> {len(rows)} rows added from {source['label']}")
 
 with open("data/DataTest.json", "w") as f:
-    json.dump(all_rows, f, indent=2)
+    json.dump(all_rows, f, separators=(',', ':'))
 
 print(f"\nDone. Total rows written: {len(all_rows)}")
