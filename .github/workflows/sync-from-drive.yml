@@ -13,22 +13,13 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Download CSV from Google Drive
-        run: |
-          curl -L "https://drive.google.com/uc?export=download&id=1g8mD6E6IDR-tME_PmT8_UNtGi8TMAiC0" -o DataTest.csv
-          echo "--- File size ---"
-          wc -l DataTest.csv
-          echo "--- First 3 lines ---"
-          head -3 DataTest.csv
-
-      - name: Convert CSV to JSON
+      - name: Download CSVs from Google Drive and Convert to JSON
         run: python3 scripts/csv_to_json.py
 
       - name: Commit and Push
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add DataTest.csv
           git add data/DataTest.json
           git commit -m "Auto-sync from Google Drive" || echo "No changes to commit"
           git push
