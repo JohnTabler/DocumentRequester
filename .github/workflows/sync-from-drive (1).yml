@@ -1,0 +1,45 @@
+name: Sync CSV from Google Drive and Convert to JSON
+
+on:
+  schedule:
+    - cron: '30 20 * * 5'  # Every Monday 9am UTC — adjust to match your PA recurrence
+  workflow_dispatch:       # Allows manual trigger from GitHub UI
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download CSVs from Google Drive and Convert to JSON
+        run: python3 scripts/csv_to_json.py
+
+      - name: Debug JSON size
+        run: |
+          echo "--- Row count ---"
+          python3 -c "import json; data=json.load(open('data/DataTest.json')); print(len(data), 'rows')"
+          echo "--- File size ---"
+          ls -lh data/DataTest.json
+          echo "--- First row ---"
+          python3 -c "import json; data=json.load(open('data/DataTest.json')); print(json.dumps(data[0], indent=2))"
+          echo "--- Row sizes ---"
+          python3 -c "
+import json
+data = json.load(open('data/DataTest.json'))
+sizes = [(i, len(json.dumps(row))) for i, row in enumerate(data)]
+sizes.sort(key=lambda x: x[1], reverse=True)
+print('Top 5 largest rows:')
+for i, size in sizes[:5]:
+    print(f'  Row {i}: {size:,} bytes')
+    print(f'  {json.dumps(data[i])}')
+"
+
+      - name: Commit and Push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add data/DataTest.json
+          git commit -m "Auto-sync from Google Drive" || echo "No changes to commit"
+          git push
