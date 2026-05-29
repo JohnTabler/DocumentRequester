@@ -22,4 +22,4 @@ jobs:
           git config user.email "actions@github.com"
           git add data/DataTest.json
           git commit -m "Auto-sync from Google Drive" || echo "No changes to commit"
-          gi
+          git push
