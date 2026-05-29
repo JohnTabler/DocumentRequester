@@ -29,7 +29,7 @@ SOURCES = [
 all_rows = []
 
 for source in SOURCES:
-    url = f"https://drive.google.com/uc?export=download&id={source['file_id']}"
+    url = f"https://drive.google.com/uc?export=download&confirm=t&id={source['file_id']}"
     print(f"Downloading: {source['label']}...")
 
     with urllib.request.urlopen(url) as response:
