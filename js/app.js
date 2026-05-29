@@ -6,31 +6,14 @@
 (function () {
   "use strict";
 
-// ── EmailJS Config ─────────────────────────────────────────
+  // ── EmailJS Config ─────────────────────────────────────────
   const EMAILJS_PUBLIC_KEY      = "MZ9UQ4CwdKnUxbBmB";
   const EMAILJS_SERVICE_ID      = "service_neenpj9";
   const EMAILJS_APPROVER_TMPL   = "template_s9epbca";
   const EMAILJS_CONFIRM_TMPL    = "template_pmo4jg8";
   const APPROVER_EMAIL          = "johntabler@gmail.com";
 
-emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
-
-    // ── Campus Display Names ───────────────────────────────────
-  const CAMPUS_NAMES = {
-    "01-City":          "City College",
-    "02-Mesa":          "Mesa College",
-    "03-Miramar":       "Miramar College",
-    "04-CE-Chavez":     "Continuing Education – César Chávez",
-    "04-CE-ECC":        "Continuing Education – Educational Cultural Complex",
-    "04-CE-MC":         "Continuing Education – Mid-City",
-    "04-CE-Mesa":       "Continuing Education – Mesa",
-    "04-CE-Miramar":    "Continuing Education – Miramar",
-    "04-CE-WC":         "Continuing Education – West City",
-    "05-District":      "District Office",
-    "06-District Wide": "District Wide",
-    "06-Other":         "Other",
-    "07-Other":         "Other"
-  };
+  emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
 
   // ── State ──────────────────────────────────────────────────
   let allDocuments = [];
@@ -40,7 +23,6 @@ emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
   // ── DOM References ─────────────────────────────────────────
   const filterCampus    = document.getElementById("filter-campus");
   const filterBuilding  = document.getElementById("filter-building");
-  const filterProject   = document.getElementById("filter-project");
   const filterDoctype   = document.getElementById("filter-doctype");
 
   const btnSearch       = document.getElementById("btn-search");
@@ -78,13 +60,19 @@ emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
 
   const DATA_URL = "https://raw.githubusercontent.com/JohnTabler/DocumentRequester/main/data/DataTest.json";
 
-fetch(DATA_URL)
+  fetch(DATA_URL)
     .then((res) => {
       if (!res.ok) throw new Error("Failed to load documents.json");
       return res.json();
     })
     .then((data) => {
-      allDocuments = data;
+      // Normalize raw SharePoint field names to consistent camelCase keys
+      allDocuments = data.map((d) => ({
+        name:         d["Name"]      || "",
+        campus:       d["campus"]    || "",
+        building:     d["Building"]  || "",
+        documentType: d["Doc Type"]  || "",
+      }));
       populateTopLevelFilters();
       bindFilterCascade();
     })
@@ -94,11 +82,10 @@ fetch(DATA_URL)
         "Unable to load document data. Please refresh the page or contact support.";
     });
 
-  // ── Populate top-level filter dropdowns (Campus, DocType) ──
+  // ── Populate top-level filter dropdowns ────────────────────
   function populateTopLevelFilters() {
-    populateSelect(filterCampus, uniqueSorted(allDocuments, "campus", CAMPUS_NAMES), "— All Campuses —", CAMPUS_NAMES);
+    populateSelect(filterCampus, uniqueSorted(allDocuments, "campus"), "— All Campuses —");
     filterBuilding.disabled = true;
-    filterProject.disabled  = true;
     filterDoctype.disabled  = true;
     btnSearch.classList.add("btn-disabled");
   }
@@ -107,23 +94,21 @@ fetch(DATA_URL)
   function bindFilterCascade() {
     filterCampus.addEventListener("change", onCampusChange);
     filterBuilding.addEventListener("change", onBuildingChange);
-    filterProject.addEventListener("change", onProjectChange);
   }
 
   function onCampusChange() {
     const campus = filterCampus.value;
 
-    // Reset + disable all downstream
+    // Reset + disable downstream
     filterBuilding.value = "";
-    filterProject.value  = "";
     filterDoctype.value  = "";
-    filterProject.disabled  = true;
-    filterDoctype.disabled  = true;
+    filterDoctype.disabled = true;
+    btnSearch.classList.add("btn-disabled");
 
     if (!campus) {
       filterBuilding.disabled = true;
-      btnSearch.classList.add("btn-disabled");
       populateSelect(filterBuilding, [], "— All Buildings —");
+      populateSelect(filterDoctype, [], "— All Types —");
       return;
     }
 
@@ -136,39 +121,19 @@ fetch(DATA_URL)
     const campus   = filterCampus.value;
     const building = filterBuilding.value;
 
-    // Reset downstream
-    filterProject.value = "";
     filterDoctype.value = "";
 
     if (!building) {
-      filterProject.disabled = true;
       filterDoctype.disabled = true;
       btnSearch.classList.add("btn-disabled");
-      populateSelect(filterProject, [], "— All Projects —");
       populateSelect(filterDoctype, [], "— All Types —");
       return;
     }
 
     const subset = allDocuments.filter((d) => d.campus === campus && d.building === building);
-    populateSelect(filterProject, uniqueSorted(subset, "project"), "— All Projects —");
     populateSelect(filterDoctype, uniqueSorted(subset, "documentType"), "— All Types —");
-    filterProject.disabled = false;
     filterDoctype.disabled = false;
     btnSearch.classList.remove("btn-disabled");
-  }
-
-  function onProjectChange() {
-    const campus   = filterCampus.value;
-    const building = filterBuilding.value;
-    const project  = filterProject.value;
-
-    filterDoctype.value = "";
-
-    const subset = project
-      ? allDocuments.filter((d) => d.campus === campus && d.building === building && d.project === project)
-      : allDocuments.filter((d) => d.campus === campus && d.building === building);
-
-    populateSelect(filterDoctype, uniqueSorted(subset, "documentType"), "— All Types —");
   }
 
   // ── Search ─────────────────────────────────────────────────
@@ -181,15 +146,14 @@ fetch(DATA_URL)
       return;
     }
     searchValidationMsg.classList.add("hidden");
+
     const campus   = filterCampus.value;
     const building = filterBuilding.value;
-    const project  = filterProject.value;
     const doctype  = filterDoctype.value;
 
     filteredDocuments = allDocuments.filter((doc) => {
       if (campus   && doc.campus        !== campus)   return false;
       if (building && doc.building      !== building) return false;
-      if (project  && doc.project       !== project)  return false;
       if (doctype  && doc.documentType  !== doctype)  return false;
       return true;
     });
@@ -198,7 +162,6 @@ fetch(DATA_URL)
   }
 
   function renderResults() {
-    // Reset selections when results change
     selectedDocuments.clear();
     updateSelectedSummary();
 
@@ -234,7 +197,7 @@ fetch(DATA_URL)
 
       const meta = document.createElement("span");
       meta.className = "doc-meta";
-      const parts = [doc.documentType, doc.project, doc.campus].filter((v) => v && v !== "Other");
+      const parts = [doc.documentType, doc.building, doc.campus].filter((v) => v);
       meta.textContent = parts.join(" · ");
 
       info.appendChild(name);
@@ -242,7 +205,6 @@ fetch(DATA_URL)
       li.appendChild(cb);
       li.appendChild(info);
 
-      // Click anywhere on row to toggle
       li.addEventListener("click", (e) => {
         if (e.target !== cb) cb.click();
       });
@@ -285,10 +247,8 @@ fetch(DATA_URL)
   btnReset.addEventListener("click", () => {
     filterCampus.value   = "";
     filterBuilding.value = "";
-    filterProject.value  = "";
     filterDoctype.value  = "";
     filterBuilding.disabled = true;
-    filterProject.disabled  = true;
     filterDoctype.disabled  = true;
     btnSearch.classList.add("btn-disabled");
 
@@ -343,9 +303,8 @@ fetch(DATA_URL)
       const doc = allDocuments.find((d) => d.name === docName);
       const meta = doc
         ? [
-            doc.campus   ? `Campus: ${CAMPUS_NAMES[doc.campus] || doc.campus}` : null,
+            doc.campus   ? `Campus: ${doc.campus}`     : null,
             doc.building ? `Building: ${doc.building}` : null,
-            doc.project  ? `Project: ${doc.project}`  : null,
           ].filter(Boolean).join(" · ")
         : null;
       return meta ? `• ${docName}\n  ${meta}` : `• ${docName}`;
@@ -397,24 +356,21 @@ fetch(DATA_URL)
   }
 
   btnNewRequest.addEventListener("click", () => {
-    // Reset everything
     sectionConfirm.classList.add("hidden");
     sectionFilters.classList.remove("hidden");
     sectionResults.classList.remove("hidden");
     sectionForm.classList.remove("hidden");
 
-    filterCampus.value = "";
+    filterCampus.value   = "";
     filterBuilding.value = "";
-    filterProject.value = "";
-    filterDoctype.value = "";
+    filterDoctype.value  = "";
     filterBuilding.disabled = true;
-    filterProject.disabled  = true;
     filterDoctype.disabled  = true;
     btnSearch.classList.add("btn-disabled");
 
-    reqName.value = "";
-    reqEmail.value = "";
-    reqOrg.value = "";
+    reqName.value    = "";
+    reqEmail.value   = "";
+    reqOrg.value     = "";
     reqMessage.value = "";
 
     filteredDocuments = [];
@@ -431,13 +387,13 @@ fetch(DATA_URL)
   });
 
   // ── Helpers ────────────────────────────────────────────────
-  function populateSelect(selectEl, values, placeholder, labelMap = {}) {
+  function populateSelect(selectEl, values, placeholder) {
     const current = selectEl.value;
     selectEl.innerHTML = `<option value="">${placeholder}</option>`;
     values.forEach((v) => {
       const opt = document.createElement("option");
       opt.value = v;
-      opt.textContent = labelMap[v] || v;
+      opt.textContent = v;
       selectEl.appendChild(opt);
     });
     restoreValue(selectEl, current);
@@ -449,18 +405,17 @@ fetch(DATA_URL)
     }
   }
 
-  function uniqueSorted(arr, key, labelMap = {}) {
-    const values = arr.map((d) => d[key]).filter(Boolean);
+  function uniqueSorted(arr, key) {
     const seen = new Set();
     const deduped = [];
-    values.forEach((v) => {
-      const label = labelMap[v] || v;
-      if (!seen.has(label)) {
-        seen.add(label);
+    arr.forEach((d) => {
+      const v = d[key];
+      if (v && !seen.has(v)) {
+        seen.add(v);
         deduped.push(v);
       }
     });
-    return deduped.sort((a, b) => (labelMap[a] || a).localeCompare(labelMap[b] || b));
+    return deduped.sort((a, b) => a.localeCompare(b));
   }
 
   function isValidEmail(email) {
