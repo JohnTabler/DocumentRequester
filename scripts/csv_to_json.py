@@ -24,6 +24,11 @@ SOURCES = [
         "campus": "Mesa College",
         "label": "Mesa Documents"
     },
+    {
+        "file_id": "1yEka8oWxdvQqzcbKVoJDyCen28wABefA",
+        "campus": "District",
+        "label": "District Documents"
+    },
 ]
 
 all_rows = []
@@ -31,17 +36,13 @@ all_rows = []
 for source in SOURCES:
     url = f"https://drive.google.com/uc?export=download&confirm=t&id={source['file_id']}"
     print(f"Downloading: {source['label']}...")
-
     with urllib.request.urlopen(url) as response:
         content = response.read().decode("utf-8-sig")
-
     reader = csv.DictReader(io.StringIO(content))
     rows = list(reader)
-
     for row in rows:
         row["campus"] = source["campus"]
         all_rows.append(row)
-
     print(f"  -> {len(rows)} rows added from {source['label']}")
 
 with open("data/DataTest.json", "w") as f:
